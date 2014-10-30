@@ -1,111 +1,146 @@
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
 
 /**
  * @(#)Executor.java
- * 
- * 
+ *
+ *
  * @author
  * @version 1.00 2011/6/13
  */
 
+
 class Executor extends Thread {
+	private int kPower = 2;
+	List<List<Vertex>> levelsOfTrees = new ArrayList();
+	
+
 	public synchronized void run() {
-		Counter counter = new Counter(this);
+
 		Vertex S = new Vertex(null, null, null, "S");
-		P1 p1 = new P1(S, counter);
+
+		CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
+		P1 p1 = new P1(S, cyclicBarrier);
 		p1.start();
-		counter.release();
-		P2 p2a = new P2(p1.m_vertex.m_left, counter);
-		P2 p2b = new P2(p1.m_vertex.m_right, counter);
-		p2a.start();
-		p2b.start();
-		counter.release();
+		try {
+			cyclicBarrier.await();
 
-		P2 p2c = new P2(p2a.m_vertex.m_left, counter);
-		P2 p2d = new P2(p2a.m_vertex.m_right, counter);
-		P3 p3a = new P3(p2b.m_vertex.m_left, counter);
-		P3 p3b = new P3(p2b.m_vertex.m_right, counter);
-		p2c.start();
-		p2d.start();
-		p3a.start();
-		p3b.start();
-		counter.release();
-		P3 p3c = new P3(p2c.m_vertex.m_left, counter);
-		P3 p3d = new P3(p2c.m_vertex.m_right, counter);
-		P3 p3e = new P3(p2d.m_vertex.m_left, counter);
-		P3 p3f = new P3(p2d.m_vertex.m_right, counter);
-		p3c.start();
-		p3d.start();
-		p3e.start();
-		p3f.start();
+			buildTree(p1);
+			buildLevelsOfTree(p1.m_vertex, 0);
+			int treeHeight = levelsOfTrees.size() - 1;
+			
+			System.out.println("IDX ############################### "+treeHeight);
+			
+			cyclicBarrier = new CyclicBarrier(levelsOfTrees.get(treeHeight).size() + 1);
+			A1 a1 = new A1(levelsOfTrees.get(treeHeight).get(0), cyclicBarrier);
+			a1.start();
+			for (int i = 1; i < levelsOfTrees.get(treeHeight).size() - 1; ++i) {
+				A a = new A(levelsOfTrees.get(treeHeight).get(i), cyclicBarrier);
+				a.start();
+			}
+			AN an = new AN(levelsOfTrees.get(treeHeight).get(
+					levelsOfTrees.get(treeHeight).size() - 1), cyclicBarrier);
+			an.start();
 
-		A1 localMat1 = new A1(p3c.m_vertex, counter);
-		A localMat2 = new A(p3d.m_vertex, counter);
-		A localMat3 = new A(p3e.m_vertex, counter);
-		A localMat4 = new A(p3f.m_vertex, counter);
-		A localMat5 = new A(p3a.m_vertex, counter);
-		AN localMat6 = new AN(p3b.m_vertex, counter);
-		localMat1.start();
-		localMat2.start();
-		localMat3.start();
-		localMat4.start();
-		localMat5.start();
-		localMat6.start();
-		counter.release();
-		A2 mergedMat1 = new A2(p2c.m_vertex, counter);
-		A2 mergedMat2 = new A2(p2d.m_vertex, counter);
-		A2 mergedMat3 = new A2(p2b.m_vertex, counter);
-		mergedMat1.start();
-		mergedMat2.start();
-		mergedMat3.start();
+			cyclicBarrier.await();
+			for (int i = treeHeight - 1; i > 0; --i) {
+				cyclicBarrier = new CyclicBarrier(levelsOfTrees.get(i).size() + 1);
+				for (Vertex v : levelsOfTrees.get(i)) {
+					A2 a2 = new A2(v, cyclicBarrier);
+					a2.start();
+				}
 
-		counter.release();
-		E2 gaussElimMat1 = new E2(p2b.m_vertex, counter);
-		E2 gaussElimMat2 = new E2(p2c.m_vertex, counter);
-		E2 gaussElimMat3 = new E2(p2d.m_vertex, counter);
-		gaussElimMat1.start();
-		gaussElimMat2.start();
-		gaussElimMat3.start();
-		counter.release();
-		A2 mergedMat4 = new A2(p2a.m_vertex, counter);
-		mergedMat4.start();
-		counter.release();
-		E2 gaussElimMat4 = new E2(p2a.m_vertex, counter);
-		gaussElimMat4.start();
-		counter.release();
-		Aroot mergedRootMat = new Aroot(p1.m_vertex, counter);
-		mergedRootMat.start();
-		counter.release();
-		
-		
-		Eroot fullElimMat = new Eroot(p1.m_vertex, counter);
-		fullElimMat.start();
-		counter.release();
-		BS backSub1 = new BS(p1.m_vertex, counter);
-		BS backSub2 = new BS(p2a.m_vertex, counter);
-		backSub1.start();
-		backSub2.start();
-		counter.release();
+				cyclicBarrier.await();
+				cyclicBarrier = new CyclicBarrier(levelsOfTrees.get(i).size() + 1);
+				for (Vertex v : levelsOfTrees.get(i)) {
+					E2 e2 = new E2(v, cyclicBarrier);
+					e2.start();
+				}
+				cyclicBarrier.await();
+			}
+			cyclicBarrier = new CyclicBarrier(2);
+			Aroot aRoot = new Aroot(levelsOfTrees.get(0).get(0), cyclicBarrier);
+			aRoot.start();
+			cyclicBarrier.await();
+			cyclicBarrier = new CyclicBarrier(2);
+			Eroot eRoot = new Eroot(levelsOfTrees.get(0).get(0), cyclicBarrier);
+			eRoot.start();
+			cyclicBarrier.await();
 
-		BS backSub3 = new BS(p2c.m_vertex, counter);
-		BS backSub4 = new BS(p2d.m_vertex, counter);
-		backSub3.start();
-		backSub4.start();
-		counter.release();
+			for (int i = 0; i < treeHeight; ++i) {
+				cyclicBarrier = new CyclicBarrier(levelsOfTrees.get(i).size() + 1);
+				for (Vertex v : levelsOfTrees.get(i)) {
+					BS b = new BS(v, cyclicBarrier);
+					b.start();
+				}
+				cyclicBarrier.await();
+			}
 
-		for ( int i = 0 ; i < fullElimMat.m_vertex.m_x.length ; i++){
-			System.err.println(fullElimMat.m_vertex.m_x[i]);
+			for (int i = 0; i < levelsOfTrees.get(treeHeight).size(); ++i) {
+				System.out.println("x" + i + "="
+						+ levelsOfTrees.get(treeHeight).get(i).m_x[1]);
+				System.out.println("x" + (i + 1) + "="
+						+ levelsOfTrees.get(treeHeight).get(i).m_x[2]);
+
+			}
+		} catch (InterruptedException | BrokenBarrierException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
-		
-		System.err.println();
-		
-		for ( int i = 0 ; i < backSub4.m_vertex.m_x.length ; i++){
-			System.err.println(backSub4.m_vertex.m_left.m_x[i]);
-			//System.err.println(backSub4.m_vertex.m_left.m_x[i]);
+	}
+	
+	private void buildLevelsOfTree(Vertex v, int level){
+		if(v == null){
+			return;
 		}
-		
-		System.err.println();
-		
-		
+		if(levelsOfTrees.size()== level){
+			levelsOfTrees.add(new ArrayList<Vertex>());
+		}
+		levelsOfTrees.get(level).add(v);
+		buildLevelsOfTree(v.m_left, level+1);
+		buildLevelsOfTree(v.m_right, level+1);
+	}
+
+	private void buildTree(Production production) {
+		Queue<Production> queue = new LinkedList<Production>();
+		queue.add(production);
+		int k = 1;
+		while (!queue.isEmpty()) {
+			Iterator<Production> i = queue.iterator();
+			List<Production> l = new LinkedList<Production>();
+			int size = queue.size();
+			CyclicBarrier barrier = new CyclicBarrier(size*2+1);
+			while (i.hasNext()) {
+				l.add(queue.poll());
+			}
+			for (Production p : l) {
+				if (k < kPower) {
+					P2 p2a = new P2(p.m_vertex.m_left, barrier);
+					P2 p2b = new P2(p.m_vertex.m_right, barrier);
+					p2a.start();
+					p2b.start();
+					queue.add(p2b);
+					queue.add(p2a);
+				} else {
+					P3 p3a = new P3(p.m_vertex.m_left, barrier);
+					P3 p3b = new P3(p.m_vertex.m_right, barrier);
+					p3a.start();
+					p3b.start();
+				}
+			}
+			try {
+				barrier.await();
+			} catch (InterruptedException | BrokenBarrierException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			++k;
+		}
 	}
 }
+

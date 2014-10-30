@@ -1,82 +1,91 @@
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
+
 /**
  * @(#)Production.java
- *
- *
+ * 
+ * 
  * @author
  * @version 1.00 2011/6/13
  */
 
-
 abstract class Production extends Thread {
 
-	Production(Vertex Vert,Counter Count){
+	// vertex where the production will be applied
+	Vertex m_vertex;
+	// graph drawer
+	GraphDrawer m_drawer;
+	// productions counter
+	CyclicBarrier m_barrier;
+
+	Production(Vertex Vert, CyclicBarrier barrier) {
 		m_vertex = Vert;
-		m_counter = Count;
+		m_barrier = barrier;
 		m_drawer = new GraphDrawer();
 	}
 
-	//returns first vertex from the left
+	// returns first vertex from the left
 	abstract Vertex apply(Vertex v);
 
-	//run the thread
+	// run the thread
 	public void run() {
-		m_counter.inc();
 		//apply the production
 		m_vertex = apply(m_vertex);
 		//plot the graph
 		m_drawer.draw(m_vertex);
-		m_counter.dec();
+		try {
+			m_barrier.await();
+		} catch (InterruptedException | BrokenBarrierException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
-
-	//vertex where the production will be applied
-	Vertex m_vertex;
-	//graph drawer
-	GraphDrawer m_drawer;
-	//productions counter
-	Counter m_counter;
 }
 
 class P1 extends Production {
-	P1(Vertex Vert,Counter Count){
-		super(Vert,Count);
+	P1(Vertex vert, CyclicBarrier barrier) {
+		super(vert, barrier);
 	}
+
 	Vertex apply(Vertex S) {
-	  System.out.println("p1");
-	  Vertex T1 = new Vertex(null,null,S,"T");
-	  Vertex T2 = new Vertex(null,null,S,"T");
-	  S.set_left(T1);
-	  S.set_right(T2);
-	  S.set_label("root");
-	  return S;
+		System.out.println("p1");
+		Vertex T1 = new Vertex(null, null, S, "T");
+		Vertex T2 = new Vertex(null, null, S, "T");
+		S.set_left(T1);
+		S.set_right(T2);
+		S.set_label("root");
+		return S;
 	}
 }
 
 class P2 extends Production {
-	P2(Vertex Vert,Counter Count){
-		super(Vert,Count);
+	P2(Vertex vert, CyclicBarrier barrier) {
+		super(vert, barrier);
 	}
-	Vertex apply(Vertex T) {
+
+	Vertex apply(Vertex vert) {
 		System.out.println("p2");
-		Vertex T1 = new Vertex(null,null,T,"T");
-		Vertex T2 = new Vertex(null,null,T,"T");
-		T.set_left(T1);
-		T.set_right(T2);
-		T.set_label("int");
-		return T;
+		Vertex t1 = new Vertex(null, null, vert, "T");
+		Vertex t2 = new Vertex(null, null, vert, "T");
+		vert.set_left(t1);
+		vert.set_right(t2);
+		vert.set_label("int");
+		return vert;
 	}
 }
-	
+
 class P3 extends Production {
-	P3(Vertex Vert,Counter Count){
-		super(Vert,Count);
+	P3(Vertex vert, CyclicBarrier barrier) {
+		super(vert, barrier);
 	}
-	Vertex apply(Vertex T) {
+
+	Vertex apply(Vertex vert) {
 		System.out.println("p3");
-		Vertex T1 = new Vertex(null,null,T,"node");
-		Vertex T2 = new Vertex(null,null,T,"node");
-		T.set_left(T1);
-		T.set_right(T2);
-		T.set_label("int");
-		return T;
+		Vertex t1 = new Vertex(null, null, vert, "node");
+		Vertex t2 = new Vertex(null, null, vert, "node");
+		vert.set_left(t1);
+		vert.set_right(t2);
+		vert.set_label("int");
+		return vert;
 	}
 }

@@ -16,7 +16,7 @@ import java.util.concurrent.CyclicBarrier;
 
 
 class Executor extends Thread {
-	private int kPower = 2;
+	private int kPower = 4;
 	List<List<Vertex>> levelsOfTrees = new ArrayList();
 	
 
@@ -80,12 +80,12 @@ class Executor extends Thread {
 				}
 				cyclicBarrier.await();
 			}
+			
 
 			for (int i = 0; i < levelsOfTrees.get(treeHeight).size(); ++i) {
 				System.out.println("x" + i + "="
 						+ levelsOfTrees.get(treeHeight).get(i).m_x[1]);
-				System.out.println("x" + (i + 1) + "="
-						+ levelsOfTrees.get(treeHeight).get(i).m_x[2]);
+				//System.out.println("x" + (i + 1) + "="+ levelsOfTrees.get(treeHeight).get(i).m_x[2]);
 
 			}
 		} catch (InterruptedException | BrokenBarrierException e) {

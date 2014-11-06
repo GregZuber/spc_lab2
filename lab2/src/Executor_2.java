@@ -8,6 +8,7 @@ import java.util.ArrayList;
  * @version 1.00 2011/6/13
  */
 
+/*
 class Executor extends Thread {
 	public synchronized void run() {
 		Counter counter = new Counter(this);
@@ -109,3 +110,5 @@ class Executor extends Thread {
 		
 	}
 }
+
+*/

@@ -8,6 +8,7 @@ import java.util.ArrayList;
  * @version 1.00 2011/6/13
  */
 
+/*
 
 
 class Executor_old extends Thread {
@@ -54,6 +55,8 @@ class Executor_old extends Thread {
 			Runtime runtime = Runtime.getRuntime();
 			runtime.freeMemory();
 			*/
+
+/*
 			licznik++;
 		}
 		
@@ -82,6 +85,7 @@ class Executor_old extends Thread {
  
  }
 }
+*/
 
 /*
 
